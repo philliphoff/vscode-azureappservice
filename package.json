@@ -762,7 +762,12 @@
                     "default": false
                 }
             }
-        }
+        },
+        "x-workflows": [
+            {
+                "id": "deployments/azure-webapps-dotnet-core"
+            }
+        ]
     },
     "scripts": {
         "vscode:prepublish": "npm run webpack-prod",

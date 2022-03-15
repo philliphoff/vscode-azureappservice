@@ -13,6 +13,7 @@ import { revealTreeItem } from './commands/api/revealTreeItem';
 import { registerCommands } from './commands/registerCommands';
 import { ext } from './extensionVariables';
 import { AzureAccountTreeItem } from './tree/AzureAccountTreeItem';
+import { registerStarterWorkflowTemplates } from './workflows/starterWorkflows';
 
 export async function activateInternal(
     context: vscode.ExtensionContext,
@@ -46,6 +47,9 @@ export async function activateInternal(
         context.subscriptions.push(vscode.workspace.registerFileSystemProvider(AppServiceFileSystem.scheme, ext.fileSystem));
 
         registerCommands();
+
+        // TODO: Defer registration to avoid activation cost.
+        await registerStarterWorkflowTemplates();
 
         // Suppress "Report an Issue" button for all errors in favor of the command
         registerErrorHandler(c => c.errorHandling.suppressReportIssue = true);
