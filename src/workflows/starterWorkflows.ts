@@ -73,27 +73,22 @@ export async function registerStarterWorkflowTemplates(actionContext: IActionCon
 
                             const transforms: [RegExp, string][] = [[/your-app-name/, node.site.siteName]];
 
-                            // TODO: Pass through the workspace.
-                            const workspace = vscode.workspace.workspaceFolders?.[0];
+                            const csprojFile = await tryGetCsprojFile(actionContext as IDeployContext, context.workspaceUri.fsPath);
 
-                            if (workspace) {
-                                const csprojFile = await tryGetCsprojFile(actionContext as IDeployContext, workspace.uri.fsPath);
+                            if (csprojFile) {
+                                // TODO: This extracts the target framework directly from the project file rather than evaluating it.
+                                const targetFramework = await tryGetTargetFramework(csprojFile);
 
-                                if (csprojFile) {
-                                    // TODO: This extracts the target framework directly from the project file rather than evaluating it.
-                                    const targetFramework = await tryGetTargetFramework(csprojFile);
+                                if (targetFramework) {
+                                    const frameworkMap: { [key: string]: string } = {
+                                        'net5.0': '5.0.406',
+                                        'net6.0': '6.0.201'
+                                    };
 
-                                    if (targetFramework) {
-                                        const frameworkMap: { [key: string]: string } = {
-                                            'net5.0': '5.0.406',
-                                            'net6.0': '6.0.201'
-                                        };
+                                    const dotNetVersion = frameworkMap[targetFramework];
 
-                                        const dotNetVersion = frameworkMap[targetFramework];
-
-                                        if (dotNetVersion) {
-                                            transforms.push([/DOTNET_VERSION: '5'/, `DOTNET_VERSION: '${dotNetVersion}'`]);
-                                        }
+                                    if (dotNetVersion) {
+                                        transforms.push([/DOTNET_VERSION: '5'/, `DOTNET_VERSION: '${dotNetVersion}'`]);
                                     }
                                 }
                             }

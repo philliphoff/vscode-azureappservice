@@ -17,6 +17,11 @@ export interface WorkflowCreationContext {
     readonly suggestedFileName?: string;
 
     /**
+     * The URI for the workspace in which the workflow will be created.
+     */
+    readonly workspaceUri: vscode.Uri;
+
+    /**
      * Creates a new workflow file.
      *
      * @param suggestedFileName The suggested file name for a new workflow.
