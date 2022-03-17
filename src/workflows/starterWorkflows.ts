@@ -5,6 +5,19 @@ import { GitHubActionsApi, GitHubActionsApiManager } from './api';
 import { ext } from '../extensionVariables';
 import { IActionContext } from '@microsoft/vscode-azext-utils';
 import { createWebSiteClient } from '../utils/azureClients';
+import { tryGetCsprojFile } from '../commands/deploy/dotnet/tryGetCsprojFile';
+import { tryGetTargetFramework } from '../commands/deploy/dotnet/setPreDeployConfigForDotnet';
+import { IDeployContext } from '@microsoft/vscode-azext-azureappservice';
+
+function transformContent(content: string, transforms: [RegExp, string][]): string {
+    for (const transform of transforms) {
+        const [from, to] = transform;
+
+        content = content.replace(from, to);
+    }
+
+    return content;
+}
 
 export async function registerStarterWorkflowTemplates(actionContext: IActionContext): Promise<void> {
     const gitHubActionsExtension = vscode.extensions.getExtension('cschleiden.vscode-github-actions');
@@ -58,8 +71,37 @@ export async function registerStarterWorkflowTemplates(actionContext: IActionCon
 
                             await context.setSecret('AZURE_WEBAPP_PUBLISH_PROFILE', xml);
 
+                            const transforms: [RegExp, string][] = [[/your-app-name/, node.site.siteName]];
+
+                            // TODO: Pass through the workspace.
+                            const workspace = vscode.workspace.workspaceFolders?.[0];
+
+                            if (workspace) {
+                                const csprojFile = await tryGetCsprojFile(actionContext as IDeployContext, workspace.uri.fsPath);
+
+                                if (csprojFile) {
+                                    // TODO: This extracts the target framework directly from the project file rather than evaluating it.
+                                    const targetFramework = await tryGetTargetFramework(csprojFile);
+
+                                    if (targetFramework) {
+                                        const frameworkMap: { [key: string]: string } = {
+                                            'net5.0': '5.0.406',
+                                            'net6.0': '6.0.201'
+                                        };
+
+                                        const dotNetVersion = frameworkMap[targetFramework];
+
+                                        if (dotNetVersion) {
+                                            transforms.push([/DOTNET_VERSION: '5'/, `DOTNET_VERSION: '${dotNetVersion}'`]);
+                                        }
+                                    }
+                                }
+                            }
+
+                            const content = transformContent(context.content, transforms);
+
                             // Expose suggested file name.
-                            await context.createWorkflowFile(context.suggestedFileName ?? 'azure-webapps-dotnet-core.yml', context.content);
+                            await context.createWorkflowFile(context.suggestedFileName ?? 'azure-webapps-dotnet-core.yml', content);
                         }
                     });
             }

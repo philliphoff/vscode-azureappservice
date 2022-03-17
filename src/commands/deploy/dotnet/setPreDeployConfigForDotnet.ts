@@ -67,7 +67,7 @@ export async function setPreDeployConfigForDotnet(context: IDeployContext, cspro
     await tasks.updateTasks(context.workspaceFolder, existingTasks.concat(newTasks));
 }
 
-async function tryGetTargetFramework(projFilePath: string): Promise<string | undefined> {
+export async function tryGetTargetFramework(projFilePath: string): Promise<string | undefined> {
     const projContents: string = (await fse.readFile(projFilePath)).toString();
     const matches: RegExpMatchArray | null = projContents.match(/<TargetFramework>(.*)<\/TargetFramework>/);
     return matches === null ? undefined : matches[1];
