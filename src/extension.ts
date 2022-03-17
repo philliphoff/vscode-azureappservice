@@ -49,7 +49,7 @@ export async function activateInternal(
         registerCommands();
 
         // TODO: Defer registration to avoid activation cost.
-        await registerStarterWorkflowTemplates();
+        await registerStarterWorkflowTemplates(activateContext);
 
         // Suppress "Report an Issue" button for all errors in favor of the command
         registerErrorHandler(c => c.errorHandling.suppressReportIssue = true);
